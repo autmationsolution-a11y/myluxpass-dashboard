@@ -14,26 +14,28 @@ export default function LoginPage() {
       if (data.session) router.replace("/dashboard");
     });
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) router.replace("/dashboard");
-    });
+    const { data: subscription } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (session) router.replace("/dashboard");
+      }
+    );
 
     return () => {
-      sub.subscription.unsubscribe();
+      subscription.subscription.unsubscribe();
     };
   }, [router]);
 
   const sendLink = async () => {
     setStatus("Sending login link...");
 
-    const redirectTo =
+    const emailRedirectTo =
       typeof window !== "undefined"
         ? `${window.location.origin}/auth/callback`
         : "https://dashboard.myluxpass.com/auth/callback";
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: redirectTo },
+      options: { emailRedirectTo },
     });
 
     if (error) setStatus("❌ " + error.message);
