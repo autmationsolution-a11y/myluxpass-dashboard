@@ -6,7 +6,7 @@ import { supabase } from "../lib/supabaseClient";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("automationsolution@gmail.com");
+  const [email, setEmail] = useState("");
   const [status, setStatus] = useState("");
 
   useEffect(() => {
@@ -14,37 +14,27 @@ export default function LoginPage() {
       if (data.session) router.replace("/dashboard");
     });
 
-    const { data: subscription } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (session) router.replace("/dashboard");
-      }
-    );
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) router.replace("/dashboard");
+    });
 
     return () => {
-      subscription.subscription.unsubscribe();
+      sub.subscription.unsubscribe();
     };
   }, [router]);
 
   const sendLink = async () => {
     setStatus("Sending login link...");
 
-    const emailRedirectTo =
-      typeof window !== "undefined"
-        ? `${window.location.origin}/auth/callback`
-        : "https://dashboard.myluxpass.com/auth/callback";
+    const redirectTo = `${window.location.origin}/auth/callback`;
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo },
+      options: { emailRedirectTo: redirectTo },
     });
 
     if (error) setStatus("❌ " + error.message);
     else setStatus("✅ Check your email for the login link");
-  };
-
-  const logout = async () => {
-    await supabase.auth.signOut();
-    setStatus("🚪 Logged out");
   };
 
   return (
@@ -61,12 +51,6 @@ export default function LoginPage() {
       <div style={{ marginTop: 10 }}>
         <button onClick={sendLink} style={{ padding: "10px 16px" }}>
           Send magic link
-        </button>
-      </div>
-
-      <div style={{ marginTop: 10 }}>
-        <button onClick={logout} style={{ padding: "10px 16px" }}>
-          Logout (test)
         </button>
       </div>
 
